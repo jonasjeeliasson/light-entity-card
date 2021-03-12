@@ -1,6 +1,6 @@
 import '@babel/polyfill';
 
-import { LitElement, html } from 'lit-element';
+import { html, LitElement } from 'lit-element';
 import style from './style';
 
 import defaultConfig from './defaults';
@@ -15,7 +15,7 @@ console.info(
   `%c  LIGHT-ENTITY-CARD   \n%c  Version ${packageJson.version}       `,
   'color: orange; font-weight: bold; background: black',
   // eslint-disable-next-line comma-dangle
-  'color: white; font-weight: bold; background: dimgray'
+  'color: white; font-weight: bold; background: dimgray',
 );
 
 class LightEntityCard extends LitElement {
@@ -172,6 +172,7 @@ class LightEntityCard extends LitElement {
 
     this._isUpdating = true;
     this._stateObjects = this.getEntitiesToShow(entity);
+
     // need to find what state objects are actually gonig to be shown
     if (this.config.consolidate_entities) {
       this._shownStateObjects = [entity];
@@ -180,9 +181,9 @@ class LightEntityCard extends LitElement {
     }
 
     const templates = this._shownStateObjects.reduce(
-      (htmlTemplate, stateObj) => html`${htmlTemplate}${this.createEntityTemplate(stateObj)}`,
+      (htmlTemplate, stateObj) => html`${htmlTemplate}${this.createEntityTemplate(stateObj, this._stateObjects)}`,
       // eslint-disable-next-line comma-dangle
-      ''
+      '',
     );
 
     const css = `light-entity-card ${this.config.shorten_cards ? ' group' : ''} ${
@@ -217,13 +218,14 @@ class LightEntityCard extends LitElement {
    * @param {LightEntity} stateObj
    * @return {TemplateResult}
    */
-  createEntityTemplate(stateObj) {
+  createEntityTemplate(stateObj, stateObjects) {
     const sliderClass = this.config.full_width_sliders ? 'ha-slider-full-width' : '';
 
     return html`
       ${this.createHeader(stateObj)}
       <div class="light-entity-card-sliders ${sliderClass}">
-        ${this.createBrightnessSlider(stateObj)} ${this.createColorTemperature(stateObj)}
+        ${this.createBrightnessSlider(stateObj, stateObjects)} 
+        ${this.createColorTemperature(stateObj, stateObjects)}
         ${this.createWhiteValue(stateObj)}
       </div>
       ${this.createColorPicker(stateObj)} ${this.createEffectList(stateObj)}
@@ -259,9 +261,10 @@ class LightEntityCard extends LitElement {
   /**
    * creates brightness slider
    * @param {LightEntity} stateObj
+   * @param stateObjects
    * @return {TemplateResult}
    */
-  createBrightnessSlider(stateObj) {
+  createBrightnessSlider(stateObj, stateObjects) {
     if (this.config.brightness === false) return html``;
     if (this.dontShowFeature('brightness', stateObj)) return html``;
 
@@ -270,7 +273,7 @@ class LightEntityCard extends LitElement {
         <ha-icon icon="hass:${this.config.brightness_icon}"></ha-icon>
         <ha-slider
           .value="${stateObj.attributes.brightness}"
-          @value-changed="${e => this.setBrightness(e, stateObj)}"
+          @value-changed="${e => this.setBrightness(e, stateObj, stateObjects)}"
           min="1"
           max="255"
         ></ha-slider>
@@ -297,9 +300,10 @@ class LightEntityCard extends LitElement {
   /**
    * creates color temperature slider for a given entity
    * @param {LightEntity} stateObj
+   * @param stateObjects
    * @return {TemplateResult}
    */
-  createColorTemperature(stateObj) {
+  createColorTemperature(stateObj, stateObjects) {
     if (this.config.color_temp === false) return html``;
     if (this.dontShowFeature('colorTemp', stateObj)) return html``;
 
@@ -307,7 +311,7 @@ class LightEntityCard extends LitElement {
       stateObj.attributes.color_temp,
       stateObj.attributes.min_mireds - 1,
       // eslint-disable-next-line comma-dangle
-      stateObj.attributes.max_mireds - 1
+      stateObj.attributes.max_mireds - 1,
     );
 
     return html`
@@ -318,7 +322,7 @@ class LightEntityCard extends LitElement {
           min="${stateObj.attributes.min_mireds}"
           max="${stateObj.attributes.max_mireds}"
           .value=${stateObj.attributes.color_temp}
-          @value-changed="${e => this.setColorTemp(e, stateObj)}"
+          @value-changed="${e => this.setColorTemp(e, stateObj, stateObjects)}"
         >
         </ha-slider>
         ${percent}
@@ -450,24 +454,34 @@ class LightEntityCard extends LitElement {
    * set the new brightness from the slider for a given entity
    * @param {CustomEvent} event
    * @param {LightEntity} stateObj
+   * @param stateObjects
    */
-  setBrightness(event, stateObj) {
+  setBrightness(event, stateObj, stateObjects) {
     const brightness = parseInt(event.target.value, 0);
-    if (isNaN(brightness) || parseInt(stateObj.attributes.brightness, 0) === brightness) return;
+    if (isNaN(brightness)) return;
 
-    this.callEntityService({ brightness }, stateObj);
+    stateObjects
+      .filter(s => s.state === 'on')
+      .forEach((s) => {
+        this.callEntityService({ brightness }, s);
+      });
   }
 
   /**
    * sets the current Color Temperature selected for a given entity
    * @param {CustomEvent} event
    * @param {LightEntity} stateObj
+   * @param stateObjects
    */
-  setColorTemp(event, stateObj) {
+  setColorTemp(event, stateObj, stateObjects) {
     const colorTemp = parseInt(event.target.value, 0);
-    if (isNaN(colorTemp) || parseInt(stateObj.attributes.color_temp, 0) === colorTemp) return;
+    if (isNaN(colorTemp)) return;
 
-    this.callEntityService({ color_temp: colorTemp }, stateObj);
+    stateObjects
+      .filter(s => s.state === 'on')
+      .forEach((s) => {
+        this.callEntityService({ color_temp: colorTemp }, s);
+      });
   }
 
   /**
