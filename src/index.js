@@ -190,11 +190,13 @@ class LightEntityCard extends LitElement {
       this.config.child_card ? ' light-entity-child-card' : ''
     }`;
 
+    const hidden = this._stateObjects.some(s => s.state === 'on') ? '' : 'hidden';
+
     return html`
       <style>
         ${this.styles}
       </style>
-      <ha-card class="${css}">
+      <ha-card class="${css} ${hidden}">
         <more-info-light .hass=${this.hass}></more-info-light>
         ${templates}
       </ha-card>
