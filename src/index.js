@@ -463,12 +463,15 @@ class LightEntityCard extends LitElement {
   setBrightness(event, stateObj, stateObjects) {
     const brightness = parseInt(event.target.value, 0);
     if (isNaN(brightness)) return;
-
-    stateObjects
-      .filter(s => s.state === 'on')
-      .forEach((s) => {
-        this.callEntityService({ brightness }, s);
-      });
+    if (stateObj.state === 'off') {
+      this.callEntityService({ brightness }, stateObj);
+    } else {
+      stateObjects
+        .filter(s => s.state === 'on')
+        .forEach((s) => {
+          this.callEntityService({ brightness }, s);
+        });
+    }
   }
 
   /**
@@ -481,11 +484,15 @@ class LightEntityCard extends LitElement {
     const colorTemp = parseInt(event.target.value, 0);
     if (isNaN(colorTemp)) return;
 
-    stateObjects
-      .filter(s => s.state === 'on')
-      .forEach((s) => {
-        this.callEntityService({ color_temp: colorTemp }, s);
-      });
+    if (stateObj.state === 'off') {
+      this.callEntityService({ color_temp: colorTemp }, stateObj);
+    } else {
+      stateObjects
+        .filter(s => s.state === 'on')
+        .forEach((s) => {
+          this.callEntityService({ color_temp: colorTemp }, s);
+        });
+    }
   }
 
   /**
