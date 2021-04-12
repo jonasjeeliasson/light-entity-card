@@ -190,7 +190,9 @@ class LightEntityCard extends LitElement {
       this.config.child_card ? ' light-entity-child-card' : ''
     }`;
 
-    const hidden = this._stateObjects.some(s => s.state === 'on') ? '' : 'hidden';
+    const hidden = this._stateObjects.some(s => s.state === 'on')
+      ? ''
+      : this.config.hide_when_all_off ? 'hidden' : '';
 
     return html`
       <style>

@@ -9,6 +9,7 @@ export default {
   color_picker: true,
   smooth_color_wheel: false,
   hide_header: false,
+  hide_when_all_off: false,
 
   child_card: false,
 
